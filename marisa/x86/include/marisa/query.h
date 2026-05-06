@@ -1,9 +1,8 @@
 #ifndef MARISA_QUERY_H_
 #define MARISA_QUERY_H_
 
-#if __cplusplus >= 201703L
- #include <string_view>
-#endif  // __cplusplus >= 201703L
+#include <cassert>
+#include <string_view>
 
 #include "marisa/base.h"
 
@@ -11,29 +10,21 @@ namespace marisa {
 
 class Query {
  public:
-  Query() : ptr_(NULL), length_(0), id_(0) {}
-  Query(const Query &query)
-      : ptr_(query.ptr_), length_(query.length_), id_(query.id_) {}
+  Query() = default;
+  Query(const Query &query) = default;
 
-  Query &operator=(const Query &query) {
-    ptr_ = query.ptr_;
-    length_ = query.length_;
-    id_ = query.id_;
-    return *this;
-  }
+  Query &operator=(const Query &query) = default;
 
   char operator[](std::size_t i) const {
-    MARISA_DEBUG_IF(i >= length_, MARISA_BOUND_ERROR);
+    assert(i < length_);
     return ptr_[i];
   }
 
-#if __cplusplus >= 201703L
   void set_str(std::string_view str) {
     set_str(str.data(), str.length());
   }
-#endif  // __cplusplus >= 201703L
   void set_str(const char *str) {
-    MARISA_DEBUG_IF(str == NULL, MARISA_NULL_ERROR);
+    assert(str != nullptr);
     std::size_t length = 0;
     while (str[length] != '\0') {
       ++length;
@@ -42,7 +33,7 @@ class Query {
     length_ = length;
   }
   void set_str(const char *ptr, std::size_t length) {
-    MARISA_DEBUG_IF((ptr == NULL) && (length != 0), MARISA_NULL_ERROR);
+    assert((ptr != nullptr) || (length == 0));
     ptr_ = ptr;
     length_ = length;
   }
@@ -50,11 +41,9 @@ class Query {
     id_ = id;
   }
 
-#if __cplusplus >= 201703L
   std::string_view str() const {
     return std::string_view(ptr_, length_);
   }
-#endif  // __cplusplus >= 201703L
   const char *ptr() const {
     return ptr_;
   }
@@ -65,19 +54,19 @@ class Query {
     return id_;
   }
 
-  void clear() {
+  void clear() noexcept {
     Query().swap(*this);
   }
-  void swap(Query &rhs) {
-    marisa::swap(ptr_, rhs.ptr_);
-    marisa::swap(length_, rhs.length_);
-    marisa::swap(id_, rhs.id_);
+  void swap(Query &rhs) noexcept {
+    std::swap(ptr_, rhs.ptr_);
+    std::swap(length_, rhs.length_);
+    std::swap(id_, rhs.id_);
   }
 
  private:
-  const char *ptr_;
-  std::size_t length_;
-  std::size_t id_;
+  const char *ptr_ = nullptr;
+  std::size_t length_ = 0;
+  std::size_t id_ = 0;
 };
 
 }  // namespace marisa
